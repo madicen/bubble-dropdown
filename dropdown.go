@@ -77,6 +77,19 @@ type Dropdown struct {
 	// styles
 	triggerStyle       lipgloss.Style
 	customTriggerStyle bool
+
+	listStyle       lipgloss.Style
+	customListStyle bool
+
+	itemStyle       lipgloss.Style
+	customItemStyle bool
+
+	cursorStyle       lipgloss.Style
+	customCursorStyle bool
+
+	// accent is the color used for the default panel border, the highlighted
+	// item, and the focused trigger arrow. Defaults to accentColor.
+	accent string
 }
 
 // New creates a Dropdown configured with the given options.
@@ -93,11 +106,27 @@ func New(opts ...Option) *Dropdown {
 		options:     cfg.Options,
 		placeholder: cfg.Placeholder,
 		maxVisible:  cfg.MaxVisible,
+		accent:      accentColor,
 	}
 
+	if cfg.AccentColor != "" {
+		d.accent = cfg.AccentColor
+	}
 	if cfg.CustomTriggerStyle {
 		d.triggerStyle = cfg.TriggerStyle
 		d.customTriggerStyle = true
+	}
+	if cfg.CustomListStyle {
+		d.listStyle = cfg.ListStyle
+		d.customListStyle = true
+	}
+	if cfg.CustomItemStyle {
+		d.itemStyle = cfg.ItemStyle
+		d.customItemStyle = true
+	}
+	if cfg.CustomCursorStyle {
+		d.cursorStyle = cfg.CursorStyle
+		d.customCursorStyle = true
 	}
 
 	// Clamp initial index
@@ -263,8 +292,12 @@ func (d *Dropdown) TriggerView() string {
 
 	arrow := dropdownArrow
 	if d.focused {
+		accent := d.accent
+		if accent == "" {
+			accent = accentColor
+		}
 		arrow = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(accentColor)).
+			Foreground(lipgloss.Color(accent)).
 			Bold(true).
 			Render(arrow)
 	}
@@ -463,6 +496,22 @@ func (d *Dropdown) Update(msg tea.Msg) (*Dropdown, tea.Cmd) {
 	return d, nil
 }
 
+// panelStyles resolves the styles for the open panel: it starts from the
+// accent-derived defaults and overlays any caller-provided custom styles.
+func (d *Dropdown) panelStyles() listStyles {
+	styles := defaultListStyles(d.accent)
+	if d.customListStyle {
+		styles.border = d.listStyle
+	}
+	if d.customItemStyle {
+		styles.normal = d.itemStyle
+	}
+	if d.customCursorStyle {
+		styles.cursor = d.cursorStyle
+	}
+	return styles
+}
+
 // doOpen creates a fresh listModel and opens the panel.
 func (d *Dropdown) doOpen() (*Dropdown, tea.Cmd) {
 	next := *d
@@ -473,7 +522,7 @@ func (d *Dropdown) doOpen() (*Dropdown, tea.Cmd) {
 		minW = 1
 	}
 
-	next.list = newListModel(d.options, d.selectedIdx, d.maxVisible, minW)
+	next.list = newListModel(d.options, d.selectedIdx, d.maxVisible, minW, d.panelStyles())
 	next.open = true
 	next.ignoreNextRelease = true
 
