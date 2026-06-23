@@ -37,7 +37,39 @@ case bubbledropdown.ItemChosenMsg:
     d.SetSelectedIndex(msg.Index)
 ```
 
-See `examples/basic` for a full working example with three dropdowns and keyboard + mouse support.
+See `examples/basic` for a full working example with three dropdowns and keyboard + mouse support, and `examples/styled` for fully customized appearance.
+
+## Styling
+
+Every visible part of the dropdown can be styled via options. `WithAccentColor` is the quickest path — it recolors the panel border, the highlighted row, and the focused trigger arrow in one go. For finer control, override individual lipgloss styles. Custom styles take precedence over the accent color where they overlap.
+
+![Styled demo](screenshots/styled.gif)
+
+```go
+d := bubbledropdown.New(
+    bubbledropdown.WithOptions([]string{"Apple", "Banana", "Cherry"}),
+
+    // One accent color recolors border + highlight + focused arrow
+    bubbledropdown.WithAccentColor("#7D56F4"),
+
+    // …or override individual styles for full control
+    bubbledropdown.WithTriggerStyle(lipgloss.NewStyle().Bold(true)),
+    bubbledropdown.WithListStyle(
+        lipgloss.NewStyle().Border(lipgloss.ThickBorder()),
+    ),
+    bubbledropdown.WithItemStyle(
+        lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("245")),
+    ),
+    bubbledropdown.WithCursorStyle(
+        lipgloss.NewStyle().Padding(0, 1).Bold(true).
+            Background(lipgloss.Color("#2ECC71")).Foreground(lipgloss.Color("16")),
+    ),
+)
+```
+
+> **Note:** `WithItemStyle` and `WithCursorStyle` should keep symmetric horizontal padding (e.g. `Padding(0, 1)`) so item rows align with the panel's computed width.
+
+Run it: `go run ./examples/styled`
 
 ## Keyboard controls
 
@@ -74,8 +106,11 @@ Creates a new Dropdown. All configuration is done through options.
 | `WithInitialIndex(int)` | Initially selected item (default 0) |
 | `WithPlaceholder(string)` | Text shown when nothing is selected (default `"Select…"`) |
 | `WithMaxVisible(int)` | Max items shown before scrolling (default 8) |
+| `WithAccentColor(string)` | Color used for the default border, highlight, and focused arrow (e.g. `"62"` or `"#7D56F4"`) |
 | `WithTriggerStyle(lipgloss.Style)` | Override the closed trigger style |
 | `WithListStyle(lipgloss.Style)` | Override the open panel border style |
+| `WithItemStyle(lipgloss.Style)` | Override non-highlighted item rows |
+| `WithCursorStyle(lipgloss.Style)` | Override the highlighted (hover/cursor) item row |
 
 ### Methods
 

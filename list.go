@@ -14,6 +14,30 @@ const defaultMaxVisible = 8
 // accentColor is the default highlight / border color.
 const accentColor = "62"
 
+// listStyles bundles the lipgloss styles used to render the open panel.
+type listStyles struct {
+	border lipgloss.Style
+	normal lipgloss.Style
+	cursor lipgloss.Style
+}
+
+// defaultListStyles returns the built-in panel styles for the given accent
+// color: a rounded border, plain padded rows, and an inverted-accent cursor.
+func defaultListStyles(accent string) listStyles {
+	if accent == "" {
+		accent = accentColor
+	}
+	return listStyles{
+		border: lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(accent)),
+		normal: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1),
+		cursor: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).
+			Background(lipgloss.Color(accent)).
+			Foreground(lipgloss.Color("255")),
+	}
+}
+
 // listModel is the open dropdown panel. It is created fresh each time the
 // dropdown opens; its View is composited by Dropdown.ViewWithOverlay.
 //
@@ -32,7 +56,7 @@ type listModel struct {
 	cursorStyle lipgloss.Style
 }
 
-func newListModel(items []string, initialCursor, maxVisible, minContentW int) listModel {
+func newListModel(items []string, initialCursor, maxVisible, minContentW int, styles listStyles) listModel {
 	if maxVisible <= 0 {
 		maxVisible = defaultMaxVisible
 	}
@@ -48,13 +72,9 @@ func newListModel(items []string, initialCursor, maxVisible, minContentW int) li
 		cursor:      initialCursor,
 		maxVisible:  maxVisible,
 		minContentW: minContentW,
-		borderStyle: lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(accentColor)),
-		normalStyle: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1),
-		cursorStyle: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).
-			Background(lipgloss.Color(accentColor)).
-			Foreground(lipgloss.Color("255")),
+		borderStyle: styles.border,
+		normalStyle: styles.normal,
+		cursorStyle: styles.cursor,
 	}
 	m.scrollToCursor()
 	return m

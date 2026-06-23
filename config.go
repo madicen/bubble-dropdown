@@ -8,10 +8,19 @@ type Config struct {
 	InitialIndex int
 	Placeholder  string
 	MaxVisible   int
+
+	// Styling. Each style has a corresponding Custom* flag so New can tell an
+	// intentionally-empty style apart from "not set".
 	TriggerStyle lipgloss.Style
 	ListStyle    lipgloss.Style
+	ItemStyle    lipgloss.Style
+	CursorStyle  lipgloss.Style
+	AccentColor  string
+
 	CustomTriggerStyle bool
 	CustomListStyle    bool
+	CustomItemStyle    bool
+	CustomCursorStyle  bool
 }
 
 // Option configures a Dropdown via New(opts...).
@@ -66,5 +75,39 @@ func WithListStyle(s lipgloss.Style) Option {
 	return func(c *Config) {
 		c.ListStyle = s
 		c.CustomListStyle = true
+	}
+}
+
+// WithItemStyle overrides the lipgloss style applied to non-highlighted item
+// rows in the open panel. The default adds one cell of horizontal padding.
+//
+// Note: the style should keep symmetric horizontal padding (e.g. Padding(0, 1))
+// so item rows align with the panel width computation.
+func WithItemStyle(s lipgloss.Style) Option {
+	return func(c *Config) {
+		c.ItemStyle = s
+		c.CustomItemStyle = true
+	}
+}
+
+// WithCursorStyle overrides the lipgloss style applied to the highlighted
+// (hovered / keyboard-cursor) item row. The default inverts the accent color.
+//
+// Note: the style should keep symmetric horizontal padding (e.g. Padding(0, 1))
+// so item rows align with the panel width computation.
+func WithCursorStyle(s lipgloss.Style) Option {
+	return func(c *Config) {
+		c.CursorStyle = s
+		c.CustomCursorStyle = true
+	}
+}
+
+// WithAccentColor sets the accent color (any lipgloss color string, e.g. "62"
+// or "#7D56F4") used for the default panel border, the highlighted item
+// background, and the focused trigger arrow. Styles set via WithListStyle /
+// WithCursorStyle take precedence over the accent color where they overlap.
+func WithAccentColor(color string) Option {
+	return func(c *Config) {
+		c.AccentColor = color
 	}
 }
