@@ -43,6 +43,8 @@ See `examples/basic` for a full working example with three dropdowns and keyboar
 
 Every visible part of the dropdown can be styled via options. `WithAccentColor` is the quickest path — it recolors the panel border, the highlighted row, and the focused trigger arrow in one go. For finer control, override individual lipgloss styles. Custom styles take precedence over the accent color where they overlap.
 
+For live theming (e.g. a settings screen where the user picks the primary color), use `SetAccentColor` to recolor an existing dropdown in place — including an already-open panel — instead of rebuilding it. `AccentColor` returns the current value.
+
 ![Styled demo](screenshots/styled.gif)
 
 ```go
@@ -130,6 +132,10 @@ d.SetFocused(bool)
 d.Selected() string
 d.SelectedIndex() int
 d.SetSelectedIndex(i int)
+
+// Theming — recolor in place at runtime (live theming)
+d.AccentColor() string
+d.SetAccentColor(color string)
 
 // Zone support
 d.SetZoneManager(*zone.Manager)

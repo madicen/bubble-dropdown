@@ -80,6 +80,18 @@ func newListModel(items []string, initialCursor, maxVisible, minContentW int, st
 	return m
 }
 
+// setStyles replaces the panel's border, normal, and cursor styles in place.
+// Dropdown.SetAccentColor uses this to recolor an already-open panel without
+// rebuilding the listModel (which would reset cursor/scroll state).
+func (m *listModel) setStyles(s listStyles) {
+	if m == nil {
+		return
+	}
+	m.borderStyle = s.border
+	m.normalStyle = s.normal
+	m.cursorStyle = s.cursor
+}
+
 // contentWidth returns the rendered width of each item row (excluding border cells).
 func (m listModel) contentWidth() int {
 	w := m.minContentW
