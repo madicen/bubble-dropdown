@@ -207,6 +207,39 @@ func (d *Dropdown) SetSelectedIndex(i int) {
 	d.selectedIdx = i
 }
 
+// AccentColor returns the current accent color used for the default panel
+// border, the highlighted item, and the focused trigger arrow. Lets consumers
+// detect changes without shadow-tracking the value themselves.
+func (d *Dropdown) AccentColor() string {
+	if d == nil {
+		return ""
+	}
+	return d.accent
+}
+
+// SetAccentColor changes the accent color at runtime. Pass any lipgloss color
+// string (e.g. "62" or "#7D56F4"); an empty string resets to the package
+// default. This is the live-theming counterpart to WithAccentColor: consumers
+// with a user-editable theme can recolor the dropdown in place instead of
+// rebuilding it.
+//
+// The focused trigger arrow re-reads the accent on each render, so it updates
+// automatically. If the panel is currently open it is recolored immediately so
+// the change is visible without waiting for the next open. Custom styles set
+// via WithListStyle / WithItemStyle / WithCursorStyle still take precedence.
+func (d *Dropdown) SetAccentColor(color string) {
+	if d == nil {
+		return
+	}
+	if color == "" {
+		color = accentColor
+	}
+	d.accent = color
+	if d.open {
+		d.list.setStyles(d.panelStyles())
+	}
+}
+
 // SetZoneManager sets the bubblezone manager. When set, the host marks the
 // trigger with zm.Mark and the dropdown skips its own coordinate hit-test
 // (trusting the zone was already checked). The host must call zm.Scan on the
