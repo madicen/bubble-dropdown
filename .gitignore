@@ -1,0 +1,26 @@
+# jj (Jujutsu) version control
+.jj/
+.jj-tui.json
+
+# macOS
+.DS_Store
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/bin/
+/dist/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
