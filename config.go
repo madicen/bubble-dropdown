@@ -70,7 +70,8 @@ func WithTriggerStyle(s lipgloss.Style) Option {
 }
 
 // WithListStyle overrides the lipgloss style applied to the open dropdown
-// panel border. The default is a rounded border in the accent color.
+// panel border. The default is a neutral rounded border (the accent color is
+// applied only when set via WithAccentColor).
 func WithListStyle(s lipgloss.Style) Option {
 	return func(c *Config) {
 		c.ListStyle = s
@@ -91,7 +92,8 @@ func WithItemStyle(s lipgloss.Style) Option {
 }
 
 // WithCursorStyle overrides the lipgloss style applied to the highlighted
-// (hovered / keyboard-cursor) item row. The default inverts the accent color.
+// (hovered / keyboard-cursor) item row. The default is reverse video, or an
+// inverted accent color when an accent is set via WithAccentColor.
 //
 // Note: the style should keep symmetric horizontal padding (e.g. Padding(0, 1))
 // so item rows align with the panel width computation.
@@ -103,9 +105,10 @@ func WithCursorStyle(s lipgloss.Style) Option {
 }
 
 // WithAccentColor sets the accent color (any lipgloss color string, e.g. "62"
-// or "#7D56F4") used for the default panel border, the highlighted item
-// background, and the focused trigger arrow. Styles set via WithListStyle /
-// WithCursorStyle take precedence over the accent color where they overlap.
+// or "#7D56F4") used for the panel border, the highlighted item background, and
+// the focused trigger arrow. It is opt-in: without it the dropdown renders
+// neutrally. Styles set via WithListStyle / WithCursorStyle take precedence
+// over the accent color where they overlap.
 func WithAccentColor(color string) Option {
 	return func(c *Config) {
 		c.AccentColor = color

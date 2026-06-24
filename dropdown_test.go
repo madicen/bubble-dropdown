@@ -44,11 +44,46 @@ func TestSetAccentColorStoresValue(t *testing.T) {
 	}
 }
 
-func TestSetAccentColorEmptyResetsToDefault(t *testing.T) {
+func TestSetAccentColorEmptyResetsToNeutral(t *testing.T) {
 	d := New(WithOptions([]string{"a", "b", "c"}), WithAccentColor("#FF0000"))
 	d.SetAccentColor("")
-	if got := d.AccentColor(); got != accentColor {
-		t.Fatalf("AccentColor() = %q, want default %q", got, accentColor)
+	if got := d.AccentColor(); got != "" {
+		t.Fatalf("AccentColor() = %q, want empty (neutral) after reset", got)
+	}
+}
+
+// TestDefaultDropdownUncolored verifies that an unstyled dropdown (no accent,
+// no custom styles) renders its open panel without any accent color: a plain
+// border and a reverse-video highlight rather than an accent background.
+func TestDefaultDropdownUncolored(t *testing.T) {
+	d := New(WithOptions([]string{"a", "b", "c"}))
+	d, _ = d.doOpen()
+
+	panel := d.list.View()
+	if got := fgSeq(t, accentColor); strings.Contains(panel, got) {
+		t.Fatalf("default panel should not use accent fg %q\n%q", got, panel)
+	}
+	if got := bgSeq(t, accentColor); strings.Contains(panel, got) {
+		t.Fatalf("default panel should not use accent bg %q\n%q", got, panel)
+	}
+	// The highlighted row should be shown with reverse video.
+	if !strings.Contains(panel, "\x1b[7m") {
+		t.Fatalf("default highlighted row should use reverse video\n%q", panel)
+	}
+}
+
+// TestDefaultFocusedArrowUncolored verifies the focused arrow on an unstyled
+// trigger is emphasized with bold but carries no accent color.
+func TestDefaultFocusedArrowUncolored(t *testing.T) {
+	d := New(WithOptions([]string{"a", "b", "c"}))
+	d.SetFocused(true)
+
+	view := d.TriggerView()
+	if got := fgSeq(t, accentColor); strings.Contains(view, got) {
+		t.Fatalf("default focused arrow should not use accent fg %q\n%q", got, view)
+	}
+	if !strings.Contains(view, "\x1b[1m") {
+		t.Fatalf("default focused arrow should be bold\n%q", view)
 	}
 }
 
@@ -61,6 +96,34 @@ func TestSetAccentColorTriggerArrow(t *testing.T) {
 	want := fgSeq(t, "#FF0000")
 	if !strings.Contains(view, want) {
 		t.Fatalf("TriggerView() = %q, want it to contain accent fg sequence %q", view, want)
+	}
+}
+
+func TestTriggerArrowMatchesCustomStyleColor(t *testing.T) {
+	green := "#2ECC71"
+	accent := "#FF0000"
+	d := New(
+		WithOptions([]string{"Red", "Green", "Blue"}),
+		WithInitialIndex(2),
+		WithAccentColor(accent),
+		WithTriggerStyle(lipgloss.NewStyle().
+			Foreground(lipgloss.Color(green)).
+			Bold(true)),
+	)
+	d.SetFocused(true)
+
+	view := d.TriggerView()
+	greenSeq := fgSeq(t, green)
+	accentSeq := fgSeq(t, accent)
+
+	// The arrow (and the whole trigger) should use the custom trigger color.
+	if !strings.Contains(view, greenSeq) {
+		t.Fatalf("focused custom trigger should use the trigger color %q\n%q", greenSeq, view)
+	}
+	// Even with an explicit accent set, the custom trigger style must win so the
+	// arrow does not clash with the caller's styling.
+	if strings.Contains(view, accentSeq) {
+		t.Fatalf("focused custom trigger arrow must not use accent color %q (should match trigger style)\n%q", accentSeq, view)
 	}
 }
 

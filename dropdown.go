@@ -87,8 +87,9 @@ type Dropdown struct {
 	cursorStyle       lipgloss.Style
 	customCursorStyle bool
 
-	// accent is the color used for the default panel border, the highlighted
-	// item, and the focused trigger arrow. Defaults to accentColor.
+	// accent is the color used for the panel border, the highlighted item, and
+	// the focused trigger arrow. Empty means neutral (uncolored): a plain
+	// border, a reverse-video highlight, and a bold-only focused arrow.
 	accent string
 }
 
@@ -106,9 +107,9 @@ func New(opts ...Option) *Dropdown {
 		options:     cfg.Options,
 		placeholder: cfg.Placeholder,
 		maxVisible:  cfg.MaxVisible,
-		accent:      accentColor,
 	}
 
+	// accent stays empty (neutral) unless the caller opts in.
 	if cfg.AccentColor != "" {
 		d.accent = cfg.AccentColor
 	}
@@ -163,8 +164,8 @@ func (d *Dropdown) Focused() bool {
 }
 
 // SetFocused marks the trigger as focused or unfocused. When focused, the ▼
-// arrow is rendered in the accent color so keyboard-only users have a visible
-// indicator.
+// arrow is emphasized (bold, plus the accent color when one is set) so
+// keyboard-only users have a visible indicator.
 func (d *Dropdown) SetFocused(f bool) {
 	if d == nil {
 		return
@@ -207,9 +208,10 @@ func (d *Dropdown) SetSelectedIndex(i int) {
 	d.selectedIdx = i
 }
 
-// AccentColor returns the current accent color used for the default panel
-// border, the highlighted item, and the focused trigger arrow. Lets consumers
-// detect changes without shadow-tracking the value themselves.
+// AccentColor returns the current accent color used for the panel border, the
+// highlighted item, and the focused trigger arrow. An empty string means the
+// dropdown is neutral (uncolored). Lets consumers detect changes without
+// shadow-tracking the value themselves.
 func (d *Dropdown) AccentColor() string {
 	if d == nil {
 		return ""
@@ -218,10 +220,10 @@ func (d *Dropdown) AccentColor() string {
 }
 
 // SetAccentColor changes the accent color at runtime. Pass any lipgloss color
-// string (e.g. "62" or "#7D56F4"); an empty string resets to the package
-// default. This is the live-theming counterpart to WithAccentColor: consumers
-// with a user-editable theme can recolor the dropdown in place instead of
-// rebuilding it.
+// string (e.g. "62" or "#7D56F4"); an empty string clears the accent and
+// returns the dropdown to its neutral, uncolored appearance. This is the
+// live-theming counterpart to WithAccentColor: consumers with a user-editable
+// theme can recolor the dropdown in place instead of rebuilding it.
 //
 // The focused trigger arrow re-reads the accent on each render, so it updates
 // automatically. If the panel is currently open it is recolored immediately so
@@ -230,9 +232,6 @@ func (d *Dropdown) AccentColor() string {
 func (d *Dropdown) SetAccentColor(color string) {
 	if d == nil {
 		return
-	}
-	if color == "" {
-		color = accentColor
 	}
 	d.accent = color
 	if d.open {
@@ -314,7 +313,12 @@ func (d *Dropdown) TriggerSize() (width, height int) {
 }
 
 // TriggerView renders the closed-state trigger: "[ Label ▼ ]".
-// When focused, the ▼ arrow is rendered in the accent color.
+//
+// Focus is indicated on the ▼ arrow. For the default (unstyled) trigger the
+// arrow is drawn in the accent color so keyboard-only users get a visible
+// affordance. When a custom trigger style is set, the arrow instead keeps the
+// trigger's own color (emphasized with bold) so the glyph always matches the
+// caller's styling rather than clashing with the accent.
 func (d *Dropdown) TriggerView() string {
 	if d == nil {
 		return "[ Select… ▼ ]"
@@ -323,24 +327,35 @@ func (d *Dropdown) TriggerView() string {
 	labelW := tw - 6 // subtract "[ " + " ▼ ]"
 	label := lipgloss.NewStyle().Width(labelW).Render(d.selectedLabel())
 
+	// Custom trigger style: render the element with the caller's style so every
+	// glyph (including the arrow) shares the same color. Pre-styling the arrow
+	// separately would embed its own color and reset sequence, leaving the
+	// arrow — and the text after it — out of sync with the rest of the trigger.
+	if d.customTriggerStyle {
+		if d.focused {
+			// Emphasize focus with bold on the arrow while keeping its color in
+			// sync. Render in segments so the bold-only arrow does not require a
+			// nested reset that would break the surrounding style.
+			pre := d.triggerStyle.Render("[ " + label + " ")
+			arrow := d.triggerStyle.Bold(true).Render(dropdownArrow)
+			post := d.triggerStyle.Render(" ]")
+			return pre + arrow + post
+		}
+		return d.triggerStyle.Render("[ " + label + " " + dropdownArrow + " ]")
+	}
+
 	arrow := dropdownArrow
 	if d.focused {
-		accent := d.accent
-		if accent == "" {
-			accent = accentColor
+		// Emphasize focus with bold. When an accent is set, also color the
+		// arrow; otherwise it stays neutral (bold only).
+		style := lipgloss.NewStyle().Bold(true)
+		if d.accent != "" {
+			style = style.Foreground(lipgloss.Color(d.accent))
 		}
-		arrow = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(accent)).
-			Bold(true).
-			Render(arrow)
+		arrow = style.Render(arrow)
 	}
 
-	trigger := "[ " + label + " " + arrow + " ]"
-
-	if d.customTriggerStyle {
-		return d.triggerStyle.Render(trigger)
-	}
-	return trigger
+	return "[ " + label + " " + arrow + " ]"
 }
 
 // ── Overlay ──────────────────────────────────────────────────────────────────

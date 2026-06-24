@@ -61,5 +61,5 @@ Sleep 500ms
 Enter
 Sleep 1.5s
 
+Hide
 Type "q"
-Sleep 500ms

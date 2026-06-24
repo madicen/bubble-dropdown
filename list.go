@@ -11,7 +11,9 @@ import (
 
 const defaultMaxVisible = 8
 
-// accentColor is the default highlight / border color.
+// accentColor is a suggested accent color for WithAccentColor / SetAccentColor.
+// It is NOT applied by default: an unstyled dropdown renders neutrally (plain
+// border and a reverse-video highlight) until an accent or custom style is set.
 const accentColor = "62"
 
 // listStyles bundles the lipgloss styles used to render the open panel.
@@ -21,21 +23,27 @@ type listStyles struct {
 	cursor lipgloss.Style
 }
 
-// defaultListStyles returns the built-in panel styles for the given accent
-// color: a rounded border, plain padded rows, and an inverted-accent cursor.
+// defaultListStyles returns the built-in panel styles. With an empty accent the
+// panel is neutral: a default-colored rounded border, plain padded rows, and a
+// reverse-video highlight. With an accent set, the border and highlight take
+// the accent color.
 func defaultListStyles(accent string) listStyles {
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
+	normal := lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
+	cursor := lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
+
 	if accent == "" {
-		accent = accentColor
-	}
-	return listStyles{
-		border: lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(accent)),
-		normal: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1),
-		cursor: lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).
+		// Neutral: show the highlight via reverse video so it stays visible
+		// against the terminal's default palette.
+		cursor = cursor.Reverse(true)
+	} else {
+		border = border.BorderForeground(lipgloss.Color(accent))
+		cursor = cursor.
 			Background(lipgloss.Color(accent)).
-			Foreground(lipgloss.Color("255")),
+			Foreground(lipgloss.Color("255"))
 	}
+
+	return listStyles{border: border, normal: normal, cursor: cursor}
 }
 
 // listModel is the open dropdown panel. It is created fresh each time the

@@ -41,9 +41,13 @@ See `examples/basic` for a full working example with three dropdowns and keyboar
 
 ## Styling
 
-Every visible part of the dropdown can be styled via options. `WithAccentColor` is the quickest path — it recolors the panel border, the highlighted row, and the focused trigger arrow in one go. For finer control, override individual lipgloss styles. Custom styles take precedence over the accent color where they overlap.
+By default the dropdown is **neutral** — it inherits your terminal's colors: a plain rounded border, a reverse-video highlight for the selected/hovered row, and a bold (uncolored) focused trigger arrow. Color is entirely opt-in.
 
-For live theming (e.g. a settings screen where the user picks the primary color), use `SetAccentColor` to recolor an existing dropdown in place — including an already-open panel — instead of rebuilding it. `AccentColor` returns the current value.
+Every visible part of the dropdown can be styled via options. `WithAccentColor` is the quickest path — it colors the panel border, the highlighted row, and the focused trigger arrow in one go. For finer control, override individual lipgloss styles. Custom styles take precedence over the accent color where they overlap.
+
+When you set `WithTriggerStyle`, the trigger arrow (`▼`) follows that style's color so the whole element stays consistent; focus is indicated by bolding the arrow rather than recoloring it with the accent. The accent-colored focused arrow only applies when an accent is set on the default, unstyled trigger.
+
+For live theming (e.g. a settings screen where the user picks the primary color), use `SetAccentColor` to recolor an existing dropdown in place — including an already-open panel — instead of rebuilding it. Passing an empty string returns it to the neutral default. `AccentColor` returns the current value.
 
 ![Styled demo](screenshots/styled.gif)
 
@@ -108,7 +112,7 @@ Creates a new Dropdown. All configuration is done through options.
 | `WithInitialIndex(int)` | Initially selected item (default 0) |
 | `WithPlaceholder(string)` | Text shown when nothing is selected (default `"Select…"`) |
 | `WithMaxVisible(int)` | Max items shown before scrolling (default 8) |
-| `WithAccentColor(string)` | Color used for the default border, highlight, and focused arrow (e.g. `"62"` or `"#7D56F4"`) |
+| `WithAccentColor(string)` | Opt-in color for the border, highlight, and focused arrow (e.g. `"62"` or `"#7D56F4"`); default is neutral |
 | `WithTriggerStyle(lipgloss.Style)` | Override the closed trigger style |
 | `WithListStyle(lipgloss.Style)` | Override the open panel border style |
 | `WithItemStyle(lipgloss.Style)` | Override non-highlighted item rows |
